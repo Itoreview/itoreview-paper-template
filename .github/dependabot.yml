@@ -1,0 +1,11 @@
+# Only the CI actions update themselves. Python, its libraries and Pyodide change only on purpose,
+# together, with the figures redrawn: a paper's results mustn't move under it.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]

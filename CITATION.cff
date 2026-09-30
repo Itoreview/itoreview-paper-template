@@ -1,0 +1,20 @@
+# How to cite this work. GitHub reads it for "Cite this repository". Keep the title and version in
+# step with .zenodo.json and pyproject.toml; a test checks.
+cff-version: 1.2.0
+message: "If you use this code or its figures, please cite the paper."
+type: software
+title: "Code for: Itoreview paper template"
+version: "1.0.0"
+license: MIT
+repository-code: "https://github.com/Itoreview/itoreview-paper-template"
+authors:
+  - name: Itoreview
+preferred-citation:
+  type: report
+  title: "Itoreview paper template"
+  authors:
+    - name: Itoreview
+  institution:
+    name: Itoreview
+  year: 2026
+  url: "https://itoreview.org/"

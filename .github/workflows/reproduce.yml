@@ -1,0 +1,88 @@
+# Proves the paper reproduces. On a fresh machine, with the versions locked in uv.lock: the tests
+# pass, every figure redraws to match the committed files, and every figure draws exactly the same
+# in Pyodide, the Python in readers' browsers. The result is published on GitHub Pages as
+# status.json, which the paper's page on itoreview.org reads for its "Reproducible" badge.
+name: Reproduce
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "23 4 * * 1" # weekly: still reproducible, with nothing changed?
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reproduce-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reproduce:
+    name: Reproduce every figure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.20"
+      - name: Install the locked versions
+        run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Tests
+        id: tests
+        run: uv run pytest
+      - name: Every figure redraws to match the committed files
+        id: figures
+        run: uv run figures --check
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Every figure draws exactly the same in Pyodide
+        id: browser
+        run: npm ci --prefix pyodide --no-audit --no-fund && node pyodide/check.mjs
+      - name: Record the result
+        if: ${{ !cancelled() }}
+        env:
+          TESTS: ${{ steps.tests.outcome }}
+          FIGURES: ${{ steps.figures.outcome }}
+          BROWSER: ${{ steps.browser.outcome }}
+        run: python3 tools/status.py site
+      - if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  publish:
+    name: Publish the status
+    needs: reproduce
+    # A failed check is published too, so the badge never shows an old success as current.
+    if: ${{ !cancelled() && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Is GitHub Pages on?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" --silent; then
+            echo "on=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::GitHub Pages is off, so the status isn't published. Turn it on under Settings → Pages → Source: GitHub Actions."
+            echo "on=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.pages.outputs.on == 'true'
+        id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "description": "Draws every figure in Pyodide, the Python in readers' browsers: node pyodide/check.mjs",
+  "type": "module",
+  "dependencies": {
+    "pyodide": "314.0.7"
+  }
+}

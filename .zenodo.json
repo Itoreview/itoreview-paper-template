@@ -1,0 +1,11 @@
+{
+  "title": "Itoreview paper template",
+  "upload_type": "publication",
+  "publication_type": "workingpaper",
+  "version": "1.0.0",
+  "description": "<p>The code behind the paper. Every figure is redrawn from scratch with one command, <code>uv run figures</code>, and checked on every change.</p>",
+  "creators": [{ "name": "Itoreview" }],
+  "license": "cc-by-4.0",
+  "keywords": ["reproducible research", "Itô's lemma", "Black–Scholes"],
+  "notes": "The code in this archive is licensed under MIT; the paper's text and figures under CC BY 4.0."
+}
