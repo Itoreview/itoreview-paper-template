@@ -53,6 +53,12 @@ def status() -> dict:
     }
 
 
+def when(checked: str) -> str:
+    """2026-09-30T09:52:21Z, as people write it: 30 September 2026 at 09:52 UTC."""
+    moment = datetime.strptime(checked, "%Y-%m-%dT%H:%M:%SZ")
+    return f"{moment.day} {moment:%B %Y} at {moment:%H:%M} UTC"
+
+
 def verdict(result: dict) -> str:
     if result["reproducible"]:
         return "Reproducible ✓"
@@ -93,8 +99,9 @@ def page(result: dict) -> str:
   figcaption {{ font-size: 0.875rem; color: #4a5a70; }}
 </style>
 <h1>{name}</h1>
-<p><strong>{html.escape(verdict(result))}</strong>, checked {html.escape(result["checked"])} on a
-fresh machine, with the versions locked in <code>uv.lock</code>:</p>
+<p><strong>{html.escape(verdict(result))}</strong>, checked
+<time datetime="{html.escape(result["checked"])}">{html.escape(when(result["checked"]))}</time>
+on a fresh machine, with the versions locked in <code>uv.lock</code>:</p>
 <ul>{proofs}</ul>
 <p>{" · ".join(links)}</p>
 <h2>Figures</h2>
