@@ -1,6 +1,6 @@
 # Itoreview paper template
 
-[![Reproduce](https://github.com/Itoreview/itoreview-paper-template/actions/workflows/reproduce.yml/badge.svg)](https://github.com/Itoreview/itoreview-paper-template/actions/workflows/reproduce.yml)
+[![Rerun](https://github.com/Itoreview/itoreview-paper-template/actions/workflows/reproduce.yml/badge.svg)](https://github.com/Itoreview/itoreview-paper-template/actions/workflows/reproduce.yml)
 
 Every paper on [itoreview.org](https://itoreview.org) publishes the code behind its figures, so
 anyone can check it, rerun it and cite it. Each paper's code lives in its own repository, made from
@@ -21,7 +21,9 @@ the Black–Scholes price of a call checked against Monte Carlo.
 
 GitHub reruns the same checks on every change and every week (the badge above). The latest result
 is published as [`status.json`](https://itoreview.github.io/itoreview-paper-template/status.json),
-which the paper's page on itoreview.org shows as its reproducibility badge.
+with the version it ran, and the paper's page on itoreview.org shows it as its rerun badge. A rerun
+shows that the code runs and its figures match; it doesn't show that anyone independent has checked
+the paper.
 
 ## What's where
 
@@ -59,6 +61,28 @@ which the paper's page on itoreview.org shows as its reproducibility badge.
    tagged `v<version>`, such as `v1.0.0`. Zenodo archives that release and mints its DOI.
 7. **Link it from the paper.** On the paper's page in Itoreview's admin, add the repository's
    address and the version's DOI.
+
+## Keep it rerunning
+
+GitHub turns a public repository's weekly run off after 60 days without activity. The paper's page
+on itoreview.org then says "Last rerun", with its date, and Itoreview's control centre lists the
+paper. To turn it back on, open the repository's **Actions** tab, choose **Rerun**, and press
+**Enable workflow**; **Run workflow** reruns it at once. Nothing here keeps the schedule on by
+machine: that is GitHub's to decide, and the badge says plainly when no run has followed.
+
+## A learner's portfolio project
+
+Learners at the Itoreview Academy can make a portfolio project from this template, and their skills
+passport shows its reruns.
+
+1. **Make the repository under your own GitHub account**, not `Itoreview`: **Use this template →
+   Create a new repository**, with yourself as the owner, public. It is yours: Itoreview has no
+   access to it.
+2. **Give it your project's title,** as in step 2 above, and replace the example with your own code
+   and tests. Its checks fail until the title changes.
+3. **Publish its result:** **Settings → Pages → Source: GitHub Actions.**
+4. **Add it to your passport:** on itoreview.org, **Your skills passport → Add a project**, with the
+   repository's address. It shows on your passport's link only once you tick it there.
 
 ## Why it's built this way
 

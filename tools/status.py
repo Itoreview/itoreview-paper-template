@@ -1,12 +1,15 @@
-"""Publishes the reproducibility check's result (CI only).
+"""Publishes the result of rerunning the paper's code (CI only).
 
     python3 tools/status.py SITE
 
-Writes SITE/status.json, which a paper's page on itoreview.org reads for its "Reproducible"
-badge; a copy of the committed figures; and SITE/index.html, a plain page for people who follow
-the badge's link. The checks' outcomes arrive in TESTS, FIGURES and BROWSER ("success",
-"failure", "skipped"...), and GitHub's own variables name the commit and the run. It uses the
-standard library alone, so it still runs when installing the project failed.
+Writes SITE/status.json, which a paper's page on itoreview.org reads for its rerun badge; a copy
+of the committed figures; and SITE/index.html, a plain page for people who follow the badge's link.
+The checks' outcomes arrive in TESTS, FIGURES and BROWSER ("success", "failure", "skipped"...),
+GitHub's own variables name the commit and the run, and CITATION.cff names the version. It uses
+the standard library alone, so it still runs when installing the project failed.
+
+It says "rerun", never "reproducible": a machine ran the paper's own code again. That someone
+independent got the same results, which "reproduced" means, is for readers to report.
 """
 
 from __future__ import annotations
@@ -15,6 +18,7 @@ import hashlib
 import html
 import json
 import os
+import re
 import shutil
 import sys
 from datetime import UTC, datetime
@@ -32,6 +36,16 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def version() -> str:
+    """The version CITATION.cff gives, such as 1.0.0, read without a YAML library."""
+    found = re.search(
+        r"""^version:\s*["']?([0-9A-Za-z][0-9A-Za-z.+_-]{0,39})["']?\s*(?:#.*)?$""",
+        (ROOT / "CITATION.cff").read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
+    return found[1] if found else ""
+
+
 def status() -> dict:
     checks = {name.lower(): os.environ.get(name, "not run") for name in CHECKS}
     server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
@@ -39,10 +53,13 @@ def status() -> dict:
     run_id = os.environ.get("GITHUB_RUN_ID", "")
     return {
         "schema": 1,
+        # Schema 1's name for "every check passed", which itoreview.org reads: kept, so papers
+        # made before this still read. The page says what it means: the rerun passed.
         "reproducible": all(outcome == "success" for outcome in checks.values()),
         "checked": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "repository": repository,
         "commit": os.environ.get("GITHUB_SHA", ""),
+        "version": version(),
         "run": f"{server}/{repository}/actions/runs/{run_id}" if run_id else "",
         "checks": checks,
         "lockfile_sha256": sha256(ROOT / "uv.lock"),
@@ -61,9 +78,16 @@ def when(checked: str) -> str:
 
 def verdict(result: dict) -> str:
     if result["reproducible"]:
-        return "Reproducible ✓"
+        return "Rerun passed ✓"
     failed = [name for name, outcome in result["checks"].items() if outcome != "success"]
-    return f"Not reproducible ✗ (failed or didn't run: {', '.join(failed)})"
+    return f"Rerun failed ✗ (failed or didn't run: {', '.join(failed)})"
+
+
+LIMIT = (
+    "This is the paper's own code, rerun by a machine. It shows that the code runs and that its "
+    "figures match. It does not show that anyone independent has checked the paper, or that its "
+    "argument is right."
+)
 
 
 def page(result: dict) -> str:
@@ -79,6 +103,7 @@ def page(result: dict) -> str:
         code = f"https://github.com/{result['repository']}/tree/{result['commit']}"
         links.append(f'<a href="{html.escape(code)}">the code at {result["commit"][:7]}</a>')
     links.append('<a href="status.json">status.json</a>')
+    of_version = f" for version {html.escape(result['version'])}" if result.get("version") else ""
     figures = "".join(
         f'<figure><img src="figures/{html.escape(entry["file"])}" alt=""><figcaption>'
         f"{html.escape(entry['file'])}</figcaption></figure>"
@@ -89,7 +114,7 @@ def page(result: dict) -> str:
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{name}: reproducibility</title>
+<title>{name}: reruns</title>
 <style>
   :root {{ color-scheme: light; }}
   body {{ margin: 2rem auto; padding: 0 1rem; max-width: 46rem; color: #1b2a41;
@@ -99,11 +124,12 @@ def page(result: dict) -> str:
   figcaption {{ font-size: 0.875rem; color: #4a5a70; }}
 </style>
 <h1>{name}</h1>
-<p><strong>{html.escape(verdict(result))}</strong>, checked
-<time datetime="{html.escape(result["checked"])}">{html.escape(when(result["checked"]))}</time>
-on a fresh machine, with the versions locked in <code>uv.lock</code>:</p>
+<p><strong>{html.escape(verdict(result))}</strong>{of_version},
+<time datetime="{html.escape(result["checked"])}">{html.escape(when(result["checked"]))}</time>,
+on a fresh machine with the versions locked in <code>uv.lock</code>:</p>
 <ul>{proofs}</ul>
 <p>{" · ".join(links)}</p>
+<p>{html.escape(LIMIT)}</p>
 <h2>Figures</h2>
 {figures}
 </html>

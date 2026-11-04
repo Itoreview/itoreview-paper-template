@@ -1,15 +1,19 @@
-# Proves the paper reproduces. On a fresh machine, with the versions locked in uv.lock: the tests
+# Reruns the paper's code. On a fresh machine, with the versions locked in uv.lock: the tests
 # pass, every figure redraws to match the committed files, and every figure draws exactly the same
 # in Pyodide, the Python in readers' browsers. The result is published on GitHub Pages as
-# status.json, which the paper's page on itoreview.org reads for its "Reproducible" badge.
-name: Reproduce
+# status.json, which the paper's page on itoreview.org reads for its rerun badge. Keep this file's
+# name: itoreview.org links to it.
+name: Rerun
 
 on:
   push:
     branches: [main]
   pull_request:
   schedule:
-    - cron: "23 4 * * 1" # weekly: still reproducible, with nothing changed?
+    # Weekly: does it still run, with nothing changed? GitHub turns this off in a public
+    # repository after 60 days without activity; "Enable workflow" on its Actions page turns it
+    # back on (README, "Keep it rerunning").
+    - cron: "23 4 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -21,7 +25,7 @@ concurrency:
 
 jobs:
   reproduce:
-    name: Reproduce every figure
+    name: Rerun the paper's code
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
